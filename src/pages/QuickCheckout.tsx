@@ -370,6 +370,50 @@ const QuickCheckout = () => {
                       </Label>
                     </div>
                   </RadioGroup>
+
+                  {/* Dummy Stripe Form for Debit Card */}
+                  {formData.payment_method === "Debit Card" && (
+                    <div className="rounded-lg border p-4 space-y-4 bg-card animate-in fade-in slide-in-from-top-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                        <h4 className="font-semibold">Card Details</h4>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="card-number">Card Number</Label>
+                        <Input
+                          id="card-number"
+                          placeholder="4242 4242 4242 4242"
+                          maxLength={19}
+                        />
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="expiry">Expiration Date</Label>
+                          <Input
+                            id="expiry"
+                            placeholder="MM/YY"
+                            maxLength={5}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="cvc">CVC</Label>
+                          <Input
+                            id="cvc"
+                            placeholder="123"
+                            maxLength={3}
+                            type="password"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="card-name">Cardholder Name</Label>
+                        <Input id="card-name" placeholder="John Doe" />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Button
