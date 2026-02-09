@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
   },
   preview: {
     host: "::",
-    port: 8080,
+    port: Number(process.env.PORT) || 8080,
     allowedHosts: ["frontend-0bfs.onrender.com"],
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(
