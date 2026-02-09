@@ -207,12 +207,12 @@ const QuickCheckout = () => {
 
                   {selectedProduct && (
                     <div className="rounded-lg border p-4">
-                      <div className="flex gap-4">
+                      <div className="flex flex-col sm:flex-row gap-4">
                         {selectedProduct.imageUrl && (
                           <img
                             src={selectedProduct.imageUrl}
                             alt={selectedProduct.name}
-                            className="h-24 w-24 rounded object-cover"
+                            className="h-48 w-full sm:h-24 sm:w-24 rounded object-cover"
                           />
                         )}
                         <div className="flex-1">
@@ -233,21 +233,23 @@ const QuickCheckout = () => {
                         </div>
                       </div>
 
-                      <div className="mt-4 flex items-center gap-4">
-                        <Label htmlFor="quantity">Quantity:</Label>
-                        <Input
-                          id="quantity"
-                          type="number"
-                          min="1"
-                          max={selectedProduct.stockQuantity}
-                          value={quantity}
-                          onChange={(e) =>
-                            setQuantity(
-                              Math.max(1, parseInt(e.target.value) || 1),
-                            )
-                          }
-                          className="w-24"
-                        />
+                      <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="flex items-center gap-4">
+                          <Label htmlFor="quantity">Quantity:</Label>
+                          <Input
+                            id="quantity"
+                            type="number"
+                            min="1"
+                            max={selectedProduct.stockQuantity}
+                            value={quantity}
+                            onChange={(e) =>
+                              setQuantity(
+                                Math.max(1, parseInt(e.target.value) || 1),
+                              )
+                            }
+                            className="w-24"
+                          />
+                        </div>
                         <span className="text-sm text-muted-foreground">
                           Total:{" "}
                           <span className="font-bold">
@@ -388,7 +390,7 @@ const QuickCheckout = () => {
                         />
                       </div>
 
-                      <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="expiry">Expiration Date</Label>
                           <Input
