@@ -12,8 +12,11 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
-  },
-  plugins: [react(), mode === "development" && componentTagger()].filter(
+  },  preview: {
+    host: "::",
+    port: 8080,
+    allowedHosts: ["frontend-0bfs.onrender.com"],
+  },  plugins: [react(), mode === "development" && componentTagger()].filter(
     Boolean,
   ),
   resolve: {
