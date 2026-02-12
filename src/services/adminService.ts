@@ -1,7 +1,5 @@
-import axios from 'axios';
+import api from './api';
 import { Order, Product, Customer } from '@/types';
-
-const API_URL = 'https://backend-2mhf.onrender.com';
 
 export interface DashboardStats {
   totalOrders: number;
@@ -12,31 +10,31 @@ export interface DashboardStats {
 }
 
 export const getDashboardStats = async (): Promise<DashboardStats> => {
-  const response = await axios.get(`${API_URL}/admin/stats`);
+  const response = await api.get('/admin/stats');
   return response.data;
 };
 
 export const getAdminOrders = async (): Promise<Order[]> => {
-  const response = await axios.get(`${API_URL}/admin/orders`);
+  const response = await api.get('/admin/orders');
   return response.data;
 };
 
 export const updateOrderStatus = async (orderId: number, status: string): Promise<void> => {
-  await axios.put(`${API_URL}/admin/orders/${orderId}/status`, { status });
+  await api.put(`/admin/orders/${orderId}/status`, { status });
 };
 
 export const getCustomers = async (): Promise<Customer[]> => {
-  const response = await axios.get(`${API_URL}/admin/customers`);
+  const response = await api.get('/admin/customers');
   return response.data;
 };
 
 export const getProducts = async (): Promise<Product[]> => {
-  const response = await axios.get(`${API_URL}/admin/products`);
+  const response = await api.get('/admin/products');
   return response.data;
 };
 
 export const createProduct = async (product: Omit<Product, 'id'>): Promise<Product> => {
-  const response = await axios.post(`${API_URL}/products`, product);
+  const response = await api.post('/products', product);
   return response.data;
 };
 
@@ -47,23 +45,23 @@ interface Category {
 }
 
 export const getCategories = async (): Promise<Category[]> => {
-    const response = await axios.get(`${API_URL}/categories`);
+    const response = await api.get('/categories');
     return response.data;
 };
 
 export const updateProduct = async (id: number, product: Partial<Product>): Promise<Product> => {
-  const response = await axios.put(`${API_URL}/products/${id}`, product);
+  const response = await api.put(`/products/${id}`, product);
   return response.data;
 };
 
 export const deleteProduct = async (id: number): Promise<void> => {
-  await axios.delete(`${API_URL}/products/${id}`);
+  await api.delete(`/products/${id}`);
 };
 
 export const uploadImage = async (file: File): Promise<{ imageUrl: string }> => {
   const formData = new FormData();
   formData.append('file', file);
-  const response = await axios.post(`${API_URL}/admin/upload`, formData, {
+  const response = await api.post('/admin/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },

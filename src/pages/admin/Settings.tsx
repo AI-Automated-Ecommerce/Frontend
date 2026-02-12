@@ -34,6 +34,7 @@ const Settings = () => {
     contact_phone: '',
     whatsapp_number: '',
     address: '',
+    bank_details: '',
     updated_at: null,
   });
 
@@ -153,6 +154,19 @@ const Settings = () => {
                 placeholder="123 Main St, City, Country"
               />
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="bank_details">Bank Payment Details</Label>
+            <textarea
+              id="bank_details"
+              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              value={businessSettings.bank_details || ''}
+              onChange={(e) => setBusinessSettings({ ...businessSettings, bank_details: e.target.value })}
+              placeholder="Bank Name: Example Bank&#10;Account No: 123456789&#10;Account Name: Business Name"
+            />
+            <p className="text-sm text-muted-foreground">
+              These details will be shared with customers for bank transfer payments.
+            </p>
           </div>
           <Button onClick={handleSaveBusinessSettings}>Save Business Details</Button>
         </CardContent>

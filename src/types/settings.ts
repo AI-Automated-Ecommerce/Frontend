@@ -5,6 +5,7 @@ export interface BusinessSettings {
   contact_phone: string | null;
   whatsapp_number: string | null;
   address: string | null;
+  bank_details: string | null;
   updated_at: string | null;
 }
 
@@ -14,4 +15,5 @@ export interface BusinessSettingsUpdate {
   contact_phone?: string;
   whatsapp_number?: string;
   address?: string;
+  bank_details?: string;
 }
