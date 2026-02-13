@@ -19,19 +19,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
-  MessageCircle, 
-  Search, 
-  Loader2, 
-  Send, 
-  Phone,
-  Clock,
-  ShoppingCart,
-  Eye,
-  User
-} from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCustomerChats, getCustomerChatHistory, sendAdminMessage } from '@/services/adminService';
+import { MessageCircle, Search, Loader2, Send, Phone, Clock, ShoppingCart, Eye, User } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchCustomerChats, fetchChatHistory, sendMessage } from '@/store/slices/chatSlice';
 import { toast } from 'sonner';
 
 interface Message {
@@ -76,37 +66,45 @@ const CustomerChats = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
-  const queryClient = useQueryClient();
+  const dispatch = useAppDispatch();
 
-  // Fetch all conversations
-  const { data: conversations = [], isLoading } = useQuery({
-    queryKey: ['customer-chats'],
-    queryFn: getCustomerChats,
-    refetchInterval: 30000, // Refresh every 30 seconds for new messages
-  });
+  const { conversations = [], status } = useAppSelector((state) => state.chats);
+  const chatHistory = useAppSelector((state) => state.chats.activeChatHistory);
+  const historyStatus = status;
+  
+  const isLoading = status === 'loading';
+  const isLoadingHistory = historyStatus === 'loading';
 
-  // Fetch specific chat history when selected
-  const { data: chatHistory, isLoading: isLoadingHistory } = useQuery({
-    queryKey: ['chat-history', selectedChat],
-    queryFn: () => getCustomerChatHistory(selectedChat!),
-    enabled: !!selectedChat,
-  });
+  // Fetch conversations on mount and periodically
+  useEffect(() => {
+    dispatch(fetchCustomerChats());
+    const interval = setInterval(() => {
+      dispatch(fetchCustomerChats());
+    }, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
+  }, [dispatch]);
 
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: ({ phoneNumber, message }: { phoneNumber: string; message: string }) =>
-      sendAdminMessage(phoneNumber, { message }),
-    onSuccess: () => {
+  // Fetch chat history when a chat is selected
+  useEffect(() => {
+    if (selectedChat) {
+      dispatch(fetchChatHistory(selectedChat));
+    }
+  }, [selectedChat, dispatch]);
+
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !selectedChat) return;
+    
+    try {
+      await dispatch(sendMessage({ phoneNumber: selectedChat, message: messageText.trim() })).unwrap();
       setMessageText('');
       toast.success('Message sent successfully!');
       // Refresh chat history and conversations
-      queryClient.invalidateQueries({ queryKey: ['chat-history', selectedChat] });
-      queryClient.invalidateQueries({ queryKey: ['customer-chats'] });
-    },
-    onError: (error: any) => {
+      dispatch(fetchChatHistory(selectedChat));
+      dispatch(fetchCustomerChats());
+    } catch (error: any) {
       toast.error(`Failed to send message: ${error.message}`);
-    },
-  });
+    }
+  };
 
   const filteredConversations = conversations.filter((conv: Conversation) =>
     conv.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -150,14 +148,7 @@ const CustomerChats = () => {
     return statusColors[status] || 'bg-gray-100 text-gray-700';
   };
 
-  const handleSendMessage = () => {
-    if (!messageText.trim() || !selectedChat) return;
-    
-    sendMessageMutation.mutate({
-      phoneNumber: selectedChat,
-      message: messageText.trim(),
-    });
-  };
+
 
   const totalConversations = conversations.length;
   const unreadCount = conversations.filter((conv: Conversation) => conv.hasUnread).length;
@@ -398,10 +389,10 @@ const CustomerChats = () => {
                 />
                 <Button
                   onClick={handleSendMessage}
-                  disabled={!messageText.trim() || sendMessageMutation.isPending}
+                  disabled={!messageText.trim()}
                   size="sm"
                 >
-                  {sendMessageMutation.isPending ? (
+                  {false ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>

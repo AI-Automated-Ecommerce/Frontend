@@ -5,15 +5,16 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { fetchSettings, updateSettings } from '@/store/slices/settingsSlice';
 import { useToast } from '@/hooks/use-toast';
 import { User, Bell, Shield, Palette, Building2, Save } from 'lucide-react';
 import { BusinessSettings } from '@/types/settings';
-import { settingsService } from '@/services/settingsService';
 
 const Settings = () => {
-  const { user } = useAuth();
+  const { user } = useAppSelector((state) => state.auth);
   const { toast } = useToast();
+  const dispatch = useAppDispatch();
 
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -26,7 +27,8 @@ const Settings = () => {
     customerSignups: false,
   });
 
-  const [businessSettings, setBusinessSettings] = useState<BusinessSettings>({
+  const { settings: businessSettings, status } = useAppSelector((state) => state.settings);
+  const [localSettings, setLocalSettings] = useState<BusinessSettings>({
     id: 0,
     business_name: '',
     contact_email: '',
@@ -38,26 +40,18 @@ const Settings = () => {
   });
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const data = await settingsService.getSettings();
-        setBusinessSettings(data);
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to load business settings',
-          variant: 'destructive',
-        });
-      }
-    };
+    dispatch(fetchSettings());
+  }, [dispatch]);
 
-    fetchSettings();
-  }, [toast]);
+  useEffect(() => {
+    if (businessSettings) {
+      setLocalSettings(businessSettings);
+    }
+  }, [businessSettings]);
 
   const handleSaveBusinessSettings = async () => {
     try {
-      const updated = await settingsService.updateSettings(businessSettings);
-      setBusinessSettings(updated);
+      await dispatch(updateSettings(localSettings)).unwrap();
       toast({
         title: 'Settings saved',
         description: 'Business details have been updated',
@@ -112,8 +106,8 @@ const Settings = () => {
                 <Label htmlFor="business_name">Business Name</Label>
                 <Input
                   id="business_name"
-                  value={businessSettings.business_name}
-                  onChange={(e) => setBusinessSettings({ ...businessSettings, business_name: e.target.value })}
+                  value={localSettings.business_name}
+                  onChange={(e) => setLocalSettings({ ...localSettings, business_name: e.target.value })}
                   placeholder="e.g. Acme Corp"
                   className="rounded-xl border-slate-200"
                 />
@@ -124,8 +118,8 @@ const Settings = () => {
                   <Input
                     id="contact_email"
                     type="email"
-                    value={businessSettings.contact_email || ''}
-                    onChange={(e) => setBusinessSettings({ ...businessSettings, contact_email: e.target.value })}
+                    value={localSettings.contact_email || ''}
+                    onChange={(e) => setLocalSettings({ ...localSettings, contact_email: e.target.value })}
                     placeholder="contact@example.com"
                     className="rounded-xl border-slate-200"
                   />
@@ -134,8 +128,8 @@ const Settings = () => {
                   <Label htmlFor="contact_phone">Contact Phone</Label>
                   <Input
                     id="contact_phone"
-                    value={businessSettings.contact_phone || ''}
-                    onChange={(e) => setBusinessSettings({ ...businessSettings, contact_phone: e.target.value })}
+                    value={localSettings.contact_phone || ''}
+                    onChange={(e) => setLocalSettings({ ...localSettings, contact_phone: e.target.value })}
                     placeholder="+1 234 567 8900"
                     className="rounded-xl border-slate-200"
                   />
@@ -146,8 +140,8 @@ const Settings = () => {
                   <Label htmlFor="whatsapp_number">WhatsApp Number</Label>
                   <Input
                     id="whatsapp_number"
-                    value={businessSettings.whatsapp_number || ''}
-                    onChange={(e) => setBusinessSettings({ ...businessSettings, whatsapp_number: e.target.value })}
+                    value={localSettings.whatsapp_number || ''}
+                    onChange={(e) => setLocalSettings({ ...localSettings, whatsapp_number: e.target.value })}
                     placeholder="+1 234 567 8900"
                     className="rounded-xl border-slate-200"
                   />
@@ -156,8 +150,8 @@ const Settings = () => {
                   <Label htmlFor="address">Address</Label>
                   <Input
                     id="address"
-                    value={businessSettings.address || ''}
-                    onChange={(e) => setBusinessSettings({ ...businessSettings, address: e.target.value })}
+                    value={localSettings.address || ''}
+                    onChange={(e) => setLocalSettings({ ...localSettings, address: e.target.value })}
                     placeholder="123 Main St, City, Country"
                     className="rounded-xl border-slate-200"
                   />
@@ -169,8 +163,8 @@ const Settings = () => {
                   id="bank_details"
                   rows={5}
                   className="rounded-xl border-slate-200"
-                  value={businessSettings.bank_details || ''}
-                  onChange={(e) => setBusinessSettings({ ...businessSettings, bank_details: e.target.value })}
+                  value={localSettings.bank_details || ''}
+                  onChange={(e) => setLocalSettings({ ...localSettings, bank_details: e.target.value })}
                   placeholder="Bank Name: Example Bank&#10;Account No: 123456789&#10;Account Name: Business Name"
                 />
                 <p className="text-sm text-slate-500">

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,38 +40,24 @@ import {
 import { Product } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Search, Package, Loader2, Boxes } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  getProducts,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  getCategories,
-  uploadImage,
-} from '@/services/adminService';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchProducts, createProduct, updateProduct, deleteProduct } from '@/store/slices/productSlice';
+import { fetchCategories } from '@/store/slices/categorySlice';
+import { uploadImage } from '@/services/adminService';
 
 const Products = () => {
-  const queryClient = useQueryClient();
+  const dispatch = useAppDispatch();
   const { toast } = useToast();
 
-  const convertGDriveLink = (url: string) => {
-    if (!url) return url;
-    const driveMatch = url.match(/\/file\/d\/(.+?)\/(view|edit)/) || url.match(/id=(.+?)(&|$)/);
-    if (driveMatch && driveMatch[1]) {
-      return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
-    }
-    return url;
-  };
+  const { items: products = [], status: productsStatus } = useAppSelector((state) => state.products);
+  const { items: categories = [] } = useAppSelector((state) => state.categories);
+  
+  const isLoadingProducts = productsStatus === 'loading';
 
-  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['adminProducts'],
-    queryFn: getProducts,
-  });
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories'],
-    queryFn: getCategories,
-  });
+  useEffect(() => {
+    dispatch(fetchProducts(true)); // true for admin
+    dispatch(fetchCategories());
+  }, [dispatch]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -90,44 +76,38 @@ const Products = () => {
     isActive: true,
   });
 
-  const createMutation = useMutation({
-    mutationFn: createProduct,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminProducts'] });
+  const handleCreateProduct = async (productData: any) => {
+    try {
+      await dispatch(createProduct(productData)).unwrap();
       toast({ title: 'Product added', description: 'Product has been created successfully' });
       setIsDialogOpen(false);
       resetForm();
-    },
-    onError: () => {
-      toast({ title: 'Error', description: 'Failed to create product', variant: 'destructive' });
-    },
-  });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to create product', variant: 'destructive' });
+    }
+  };
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<Product> }) => updateProduct(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminProducts'] });
+  const handleUpdateProduct = async (id: number, data: Partial<Product>) => {
+    try {
+      await dispatch(updateProduct({ id, data })).unwrap();
       toast({ title: 'Product updated', description: 'Product has been updated successfully' });
       setIsDialogOpen(false);
       resetForm();
-    },
-    onError: () => {
-      toast({ title: 'Error', description: 'Failed to update product', variant: 'destructive' });
-    },
-  });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to update product', variant: 'destructive' });
+    }
+  };
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteProduct,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminProducts'] });
+  const handleDeleteProductAction = async (productId: number) => {
+    try {
+      await dispatch(deleteProduct(productId)).unwrap();
       toast({ title: 'Product deleted', description: 'Product has been deleted successfully' });
       setIsDeleteDialogOpen(false);
       setProductToDelete(null);
-    },
-    onError: () => {
-      toast({ title: 'Error', description: 'Failed to delete product', variant: 'destructive' });
-    },
-  });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to delete product', variant: 'destructive' });
+    }
+  };
 
   const filteredProducts = useMemo(
     () =>
@@ -186,7 +166,7 @@ const Products = () => {
     try {
       const { imageUrl } = await uploadImage(file);
       setFormData((prev) => ({ ...prev, imageUrl }));
-      toast({ title: 'Success', description: 'Image uploaded to Google Drive' });
+      toast({ title: 'Success', description: 'Image uploaded successfully' });
     } catch (error: unknown) {
       const errorMessage =
         typeof error === 'object' &&
@@ -195,7 +175,7 @@ const Products = () => {
         typeof (error as { response?: unknown }).response === 'object' &&
         (error as { response?: { data?: { detail?: string } } }).response?.data?.detail
           ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail
-          : 'Could not upload image to Google Drive';
+          : 'Could not upload image';
       toast({
         title: 'Upload failed',
         description: errorMessage,
@@ -217,22 +197,19 @@ const Products = () => {
     }
 
     if (selectedProduct) {
-      updateMutation.mutate({
-        id: selectedProduct.id,
-        data: {
-          name: formData.name,
-          description: formData.description,
-          price: parseFloat(formData.price),
-          stockQuantity: parseInt(formData.stockQuantity) || 0,
-          categoryId: parseInt(formData.categoryId),
-          imageUrl: formData.imageUrl,
-          isActive: formData.isActive,
-        },
+      handleUpdateProduct(selectedProduct.id, {
+        name: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        stockQuantity: parseInt(formData.stockQuantity) || 0,
+        categoryId: parseInt(formData.categoryId),
+        imageUrl: formData.imageUrl,
+        isActive: formData.isActive,
       });
       return;
     }
 
-    createMutation.mutate({
+    handleCreateProduct({
       name: formData.name,
       description: formData.description,
       price: parseFloat(formData.price),
@@ -245,7 +222,7 @@ const Products = () => {
 
   const handleDeleteProduct = () => {
     if (productToDelete) {
-      deleteMutation.mutate(productToDelete.id);
+      handleDeleteProductAction(productToDelete.id);
     }
   };
 
@@ -486,8 +463,8 @@ const Products = () => {
                 <Input
                   id="imageUrl"
                   value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: convertGDriveLink(e.target.value) })}
-                  placeholder="GDrive link or external URL"
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  placeholder="Image URL"
                   className="rounded-xl border-slate-200"
                 />
                 <div className="relative">
@@ -510,7 +487,6 @@ const Products = () => {
                   </Button>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-500">Paste a direct URL or upload directly to Google Drive.</p>
             </div>
           </div>
 

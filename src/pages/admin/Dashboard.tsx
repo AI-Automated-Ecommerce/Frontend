@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,30 +16,32 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { getAdminOrders, getCustomers, getDashboardStats } from '@/services/adminService';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchDashboardStats } from '@/store/slices/dashboardSlice';
+import { fetchAdminOrders } from '@/store/slices/orderSlice';
+import { fetchCustomers } from '@/store/slices/customerSlice';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
-  const { data: stats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['adminStats'],
-    queryFn: getDashboardStats,
-  });
+  const { stats, status: statsStatus } = useAppSelector((state) => state.dashboard);
+  const { items: orders = [], status: ordersStatus } = useAppSelector((state) => state.orders);
+  const { items: customers = [], status: customersStatus } = useAppSelector((state) => state.customers);
 
-  const { data: orders = [], isLoading: isLoadingOrders } = useQuery({
-    queryKey: ['adminOrders'],
-    queryFn: getAdminOrders,
-  });
+  useEffect(() => {
+    dispatch(fetchDashboardStats());
+    dispatch(fetchAdminOrders());
+    dispatch(fetchCustomers());
+  }, [dispatch]);
 
-  const { data: customers = [], isLoading: isLoadingCustomers } = useQuery({
-    queryKey: ['customers'],
-    queryFn: getCustomers,
-  });
+  const isLoadingStats = statsStatus === 'loading';
+  const isLoadingOrders = ordersStatus === 'loading';
+  const isLoadingCustomers = customersStatus === 'loading';
 
-  if (isLoadingStats) {
+  if (isLoadingStats && !stats) {
     return (
       <div className="admin-surface flex h-96 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

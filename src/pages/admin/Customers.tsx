@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,16 +10,19 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Search, Users, Loader2, WalletCards, ShoppingCart, UserPlus } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { getCustomers } from '@/services/adminService';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchCustomers } from '@/store/slices/customerSlice';
 
 const Customers = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const dispatch = useAppDispatch();
+  
+  const { items: customers = [], status } = useAppSelector((state) => state.customers);
+  const isLoading = status === 'loading';
 
-  const { data: customers = [], isLoading } = useQuery({
-    queryKey: ['customers'],
-    queryFn: getCustomers,
-  });
+  useEffect(() => {
+    dispatch(fetchCustomers());
+  }, [dispatch]);
 
   const filteredCustomers = useMemo(
     () =>

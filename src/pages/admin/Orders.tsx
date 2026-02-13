@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,31 +28,41 @@ import {
 import { Order, OrderStatus } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, Filter, Loader2, Package, Search } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAdminOrders, updateOrderStatus } from '@/services/adminService';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchAdminOrders, updateOrderStatus } from '@/store/slices/orderSlice';
 
 const Orders = () => {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const dispatch = useAppDispatch();
 
-  const { data: orders = [], isLoading } = useQuery({
-    queryKey: ['adminOrders'],
-    queryFn: getAdminOrders,
-  });
+  const { items: orders = [], status, error } = useAppSelector((state) => state.orders);
+  const isLoading = status === 'loading';
 
-  const statusMutation = useMutation({
-    mutationFn: ({ orderId, status }: { orderId: number; status: string }) => updateOrderStatus(orderId, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminOrders'] });
-      toast({ title: 'Status updated', description: 'Order status has been updated successfully' });
-    },
-    onError: () => {
-      toast({ title: 'Error', description: 'Failed to update order status', variant: 'destructive' });
-    },
-  });
+  useEffect(() => {
+    dispatch(fetchAdminOrders());
+  }, [dispatch]);
+  
+  // Show error toast if fetch fails
+  useEffect(() => {
+    if (status === 'failed' && error) {
+         toast({ title: 'Error', description: error, variant: 'destructive' });
+    }
+  }, [status, error, toast]);
+
+  const handleStatusChange = async (orderId: number, newStatus: OrderStatus) => {
+      try {
+          await dispatch(updateOrderStatus({ orderId, status: newStatus })).unwrap();
+          toast({ title: 'Status updated', description: 'Order status has been updated successfully' });
+          if (selectedOrder?.id === orderId) {
+            setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
+          }
+      } catch (err: any) {
+          toast({ title: 'Error', description: err.message || 'Failed to update order status', variant: 'destructive' });
+      }
+  };
 
   const filteredOrders = useMemo(
     () =>
@@ -102,13 +112,6 @@ const Orders = () => {
         return <Badge className="rounded-md bg-rose-100 px-2.5 text-rose-700 hover:bg-rose-100">Cancelled</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
-  const handleStatusChange = (orderId: number, newStatus: OrderStatus) => {
-    statusMutation.mutate({ orderId, status: newStatus });
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
     }
   };
 

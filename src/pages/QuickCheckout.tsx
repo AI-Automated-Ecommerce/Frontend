@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getProducts } from "../services/productService";
-import { placeOrder } from "../services/orderService";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchProducts } from "@/store/slices/productSlice";
+import { placeOrder as placeOrderThunk } from "@/store/slices/orderSlice";
 import { Product } from "../types";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,11 +30,16 @@ import { CreditCard, Banknote, ShoppingBag } from "lucide-react";
 const QuickCheckout = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [products, setProducts] = useState<Product[]>([]);
+  const dispatch = useAppDispatch();
+  
+  const { items: products = [], status: productsStatus } = useAppSelector((state) => state.products);
+  const { status: orderStatus } = useAppSelector((state) => state.orders);
+  
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [fetchingProducts, setFetchingProducts] = useState(true);
+  
+  const loading = orderStatus === 'loading';
+  const fetchingProducts = productsStatus === 'loading';
 
   const [formData, setFormData] = useState({
     user_name: "",
@@ -44,55 +50,60 @@ const QuickCheckout = () => {
   });
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const loadProducts = async () => {
       try {
-        const data = await getProducts();
-        const activeProducts = data.filter(
-          (p) => p.isActive && p.stockQuantity > 0,
-        );
-        setProducts(activeProducts);
-
-        // Check for URL params
-        const urlProductId = searchParams.get("productId");
-        const urlQuantity = searchParams.get("quantity");
-        const urlName = searchParams.get("name");
-        const urlAddress = searchParams.get("address");
-        const urlPhone = searchParams.get("phone");
-        const urlEmail = searchParams.get("email");
-
-        if (urlProductId) {
-          const product = activeProducts.find(
-            (p) => p.id === parseInt(urlProductId),
-          );
-          if (product) {
-            setSelectedProduct(product);
-            if (urlQuantity) {
-              setQuantity(parseInt(urlQuantity));
-            }
-          }
-        }
-
-        if (urlName || urlAddress || urlPhone || urlEmail) {
-          setFormData((prev) => ({
-            ...prev,
-            user_name: urlName || prev.user_name,
-            shipping_address: urlAddress || prev.shipping_address,
-            user_phone: urlPhone || prev.user_phone,
-            user_email: urlEmail || prev.user_email,
-          }));
-        }
+        await dispatch(fetchProducts(false)).unwrap(); // false for public products
       } catch (error) {
         console.error("Failed to fetch products", error);
         toast.error("Failed to load products");
-      } finally {
-        setFetchingProducts(false);
       }
     };
-    fetchProducts();
-  }, [searchParams]);
+    loadProducts();
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (productsStatus === 'succeeded' && products.length > 0) {
+      const activeProducts = products.filter(
+        (p) => p.isActive && p.stockQuantity > 0,
+      );
+
+      // Check for URL params
+      const urlProductId = searchParams.get("productId");
+      const urlQuantity = searchParams.get("quantity");
+      const urlName = searchParams.get("name");
+      const urlAddress = searchParams.get("address");
+      const urlPhone = searchParams.get("phone");
+      const urlEmail = searchParams.get("email");
+
+      if (urlProductId) {
+        const product = activeProducts.find(
+          (p) => p.id === parseInt(urlProductId),
+        );
+        if (product) {
+          setSelectedProduct(product);
+          if (urlQuantity) {
+            setQuantity(parseInt(urlQuantity));
+          }
+        }
+      }
+
+      if (urlName || urlAddress || urlPhone || urlEmail) {
+        setFormData((prev) => ({
+          ...prev,
+          user_name: urlName || prev.user_name,
+          shipping_address: urlAddress || prev.shipping_address,
+          user_phone: urlPhone || prev.user_phone,
+          user_email: urlEmail || prev.user_email,
+        }));
+      }
+    }
+  }, [productsStatus, products, searchParams]);
 
   const handleProductSelect = (productId: string) => {
-    const product = products.find((p) => p.id === parseInt(productId));
+    const activeProducts = products.filter(
+      (p) => p.isActive && p.stockQuantity > 0,
+    );
+    const product = activeProducts.find((p) => p.id === parseInt(productId));
     setSelectedProduct(product || null);
     setQuantity(1);
   };
@@ -129,7 +140,6 @@ const QuickCheckout = () => {
       return;
     }
 
-    setLoading(true);
     try {
       const orderData = {
         ...formData,
@@ -141,18 +151,15 @@ const QuickCheckout = () => {
         ],
       };
 
-      const response = await placeOrder(orderData);
+      const response = await dispatch(placeOrderThunk(orderData)).unwrap();
       toast.success("Order placed successfully!");
       navigate(`/order-confirmation/${response.order_id}`, {
         state: { orderDetails: response },
       });
     } catch (error: any) {
       console.error("Order placement failed:", error);
-      const errorMessage =
-        error.response?.data?.detail || "Failed to place order";
+      const errorMessage = error.message || "Failed to place order";
       toast.error(errorMessage);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -193,15 +200,17 @@ const QuickCheckout = () => {
                       <SelectValue placeholder="Choose a product" />
                     </SelectTrigger>
                     <SelectContent>
-                      {products.map((product) => (
-                        <SelectItem
-                          key={product.id}
-                          value={product.id.toString()}
-                        >
-                          {product.name} - ${product.price} (
-                          {product.stockQuantity} in stock)
-                        </SelectItem>
-                      ))}
+                      {products
+                        .filter((p) => p.isActive && p.stockQuantity > 0)
+                        .map((product) => (
+                          <SelectItem
+                            key={product.id}
+                            value={product.id.toString()}
+                          >
+                            {product.name} - ${product.price} (
+                            {product.stockQuantity} in stock)
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
 

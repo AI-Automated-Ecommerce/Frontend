@@ -12,10 +12,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAppSelector } from '@/store/hooks';
 
 const AdminLayout = () => {
-  const { user } = useAuth();
+  const { user } = useAppSelector((state) => state.auth);
   const userInitials = (user?.name || 'Admin')
     .split(' ')
     .map((part) => part[0])

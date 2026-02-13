@@ -27,7 +27,8 @@ import {
   FileText,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from '@/contexts/AuthContext';
+import { useAppDispatch } from '@/store/hooks';
+import { logout as logoutAction } from '@/store/slices/authSlice';
 
 const menuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
@@ -44,7 +45,7 @@ export function AdminSidebar() {
   const collapsed = state === 'collapsed';
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const dispatch = useAppDispatch();
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -125,7 +126,7 @@ export function AdminSidebar() {
           variant="ghost"
           className={`w-full rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 ${collapsed ? 'justify-center px-0' : 'justify-start gap-3 px-3'}`}
           onClick={() => {
-            logout();
+            dispatch(logoutAction());
             navigate('/login');
           }}
         >

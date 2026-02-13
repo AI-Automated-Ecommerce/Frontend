@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { businessService } from '@/services/businessService';
+import { useState, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchBusinessDetails, createBusinessDetail, updateBusinessDetail, deleteBusinessDetail } from '@/store/slices/businessSlice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,54 +19,55 @@ import { toast } from 'sonner';
 import { BusinessDetail } from '@/types/business';
 
 const BusinessDetails = () => {
-  const queryClient = useQueryClient();
+  const dispatch = useAppDispatch();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({ title: '', content: '' });
 
-  const { data: details, isLoading } = useQuery({
-    queryKey: ['businessDetails'],
-    queryFn: businessService.getAllDetails,
-  });
+  const { details = [], status } = useAppSelector((state) => state.business);
+  const isLoading = status === 'loading';
 
-  const createMutation = useMutation({
-    mutationFn: businessService.createDetail,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['businessDetails'] });
+  useEffect(() => {
+    dispatch(fetchBusinessDetails());
+  }, [dispatch]);
+
+  const handleCreate = async (data: typeof formData) => {
+    try {
+      await dispatch(createBusinessDetail(data)).unwrap();
       setIsAddOpen(false);
       setFormData({ title: '', content: '' });
       toast.success('Section created successfully');
-    },
-    onError: () => toast.error('Failed to create section'),
-  });
+    } catch (err) {
+      toast.error('Failed to create section');
+    }
+  };
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: typeof formData }) =>
-      businessService.updateDetail(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['businessDetails'] });
+  const handleUpdate = async (id: number, data: typeof formData) => {
+    try {
+      await dispatch(updateBusinessDetail({ id, detail: data })).unwrap();
       setEditingId(null);
       setFormData({ title: '', content: '' });
       toast.success('Section updated successfully');
-    },
-    onError: () => toast.error('Failed to update section'),
-  });
+    } catch (err) {
+      toast.error('Failed to update section');
+    }
+  };
 
-  const deleteMutation = useMutation({
-    mutationFn: businessService.deleteDetail,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['businessDetails'] });
+  const handleDeleteAction = async (id: number) => {
+    try {
+      await dispatch(deleteBusinessDetail(id)).unwrap();
       toast.success('Section deleted successfully');
-    },
-    onError: () => toast.error('Failed to delete section'),
-  });
+    } catch (err) {
+      toast.error('Failed to delete section');
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingId) {
-      updateMutation.mutate({ id: editingId, data: formData });
+      handleUpdate(editingId, formData);
     } else {
-      createMutation.mutate(formData);
+      handleCreate(formData);
     }
   };
 
@@ -78,7 +79,7 @@ const BusinessDetails = () => {
 
   const handleDelete = (id: number) => {
     if (confirm('Are you sure you want to delete this section?')) {
-      deleteMutation.mutate(id);
+      handleDeleteAction(id);
     }
   };
 
@@ -130,8 +131,8 @@ const BusinessDetails = () => {
                 />
               </div>
               <DialogFooter>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {(createMutation.isPending || updateMutation.isPending) && (
+                <Button type="submit" disabled={false}>
+                  {false && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
                   {editingId ? 'Save Changes' : 'Create Section'}
