@@ -19,10 +19,12 @@ import {
   ShoppingCart,
   Package,
   Users,
+  MessageCircle,
   Settings,
   LogOut,
   Command,
   Search,
+  FileText,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,6 +34,8 @@ const menuItems = [
   { title: 'Orders', url: '/orders', icon: ShoppingCart, badge: 2 },
   { title: 'Products', url: '/products', icon: Package },
   { title: 'Customers', url: '/customers', icon: Users },
+  { title: 'Customer Chats', url: '/chats', icon: MessageCircle },
+  { title: 'Business Details', url: '/business-details', icon: FileText },
   { title: 'Settings', url: '/settings', icon: Settings },
 ];
 

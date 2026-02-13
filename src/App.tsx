@@ -11,7 +11,9 @@ import Dashboard from "./pages/admin/Dashboard";
 import Orders from "./pages/admin/Orders";
 import Products from "./pages/admin/Products";
 import Customers from "./pages/admin/Customers";
+import CustomerChats from "./pages/admin/CustomerChats";
 import Settings from "./pages/admin/Settings";
+import BusinessDetails from "./pages/admin/BusinessDetails";
 import QuickCheckout from "./pages/QuickCheckout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import NotFound from "./pages/NotFound";
@@ -47,6 +49,8 @@ const App = () => (
               <Route path="orders" element={<Orders />} />
               <Route path="products" element={<Products />} />
               <Route path="customers" element={<Customers />} />
+              <Route path="chats" element={<CustomerChats />} />
+              <Route path="business-details" element={<BusinessDetails />} />
               <Route path="settings" element={<Settings />} />
             </Route>
 

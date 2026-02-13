@@ -28,7 +28,7 @@ const AdminLayout = () => {
       <div className="min-h-screen bg-[#eceef2] p-3 md:p-4 lg:p-5">
         <div className="flex min-h-[calc(100vh-1.6rem)] w-full overflow-hidden rounded-[30px] border border-slate-200/90 bg-[#f5f7fb] shadow-[0_28px_74px_-45px_rgba(15,23,42,0.6)]">
           <AdminSidebar />
-          <div className="flex flex-1 flex-col">
+          <div className="flex w-full min-w-0 flex-1 flex-col">
             <header className="flex h-20 items-center justify-between border-b border-slate-200/80 bg-white/80 px-4 backdrop-blur md:px-8">
               <div className="flex items-center gap-3">
                 <SidebarTrigger className="h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100" />
@@ -87,7 +87,7 @@ const AdminLayout = () => {
                 </div>
               </div>
             </header>
-            <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-7">
+            <main className="flex-1 min-w-0 overflow-auto p-4 md:p-6 lg:p-7">
               <Outlet />
             </main>
           </div>

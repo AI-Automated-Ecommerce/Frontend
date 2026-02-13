@@ -2,14 +2,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   ArrowUpRight,
-  Calendar,
   CheckCircle2,
   Download,
   Mail,
   MapPin,
-  MessageCircle,
   Phone,
-  Plus,
   ShoppingCart,
   Package,
   DollarSign,
@@ -112,6 +109,11 @@ const Dashboard = () => {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3);
 
+  const latestCustomers = customers
+    .slice()
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 3);
+
   const formatOrderTime = (dateString: string) =>
     new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -189,7 +191,7 @@ const Dashboard = () => {
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
+      <div className="grid gap-6 xl:grid-cols-[2fr_1fr] xl:items-start">
         <div className="admin-surface p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -234,7 +236,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="admin-surface overflow-hidden">
+        <div className="admin-surface h-full overflow-hidden">
           <div className="admin-gradient-panel p-5">
             <div className="flex items-center justify-between">
               <Badge className="rounded-lg bg-white/60 px-2.5 py-1 text-slate-700 hover:bg-white/60">Customer Detail</Badge>
@@ -242,14 +244,28 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="space-y-5 px-5 pb-5 pt-4">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                <p className="text-xs text-slate-500">Customers</p>
+                <p className="text-sm font-semibold text-slate-900">{totalCustomersCount}</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                <p className="text-xs text-slate-500">Pending</p>
+                <p className="text-sm font-semibold text-slate-900">{pendingOrdersCount}</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                <p className="text-xs text-slate-500">Revenue</p>
+                <p className="text-sm font-semibold text-slate-900">${totalRevenueValue.toFixed(0)}</p>
+              </div>
+            </div>
             {isLoadingCustomers ? (
               <div className="flex h-40 items-center justify-center">
                 <Loader2 className="h-7 w-7 animate-spin text-slate-400" />
               </div>
             ) : !topCustomer ? (
-              <div className="py-10 text-center">
-                <p className="text-sm font-medium text-slate-700">No customers yet</p>
-                <p className="mt-1 text-sm text-slate-500">Once customers exist, a top customer summary will appear here.</p>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center">
+                <p className="text-sm font-medium text-slate-700">No customer profile available yet</p>
+                <p className="mt-1 text-sm text-slate-500">Customer details will populate automatically when records are created.</p>
                 <Button className="mt-4 h-10 rounded-xl" onClick={() => navigate('/customers')}>
                   Open Customers
                 </Button>
@@ -304,6 +320,29 @@ const Dashboard = () => {
                 </div>
               </>
             )}
+
+            <div className="space-y-3 border-t border-slate-200 pt-4">
+              <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Latest Customers</h4>
+              {isLoadingCustomers ? (
+                <div className="flex h-16 items-center justify-center">
+                  <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                </div>
+              ) : latestCustomers.length === 0 ? (
+                <p className="text-sm text-slate-500">No customers found.</p>
+              ) : (
+                latestCustomers.map((customer) => (
+                  <div key={customer.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-2.5">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">{customer.name}</p>
+                      <p className="text-xs text-slate-500">{customer.email}</p>
+                    </div>
+                    <Badge className="rounded-md bg-slate-100 text-slate-700 hover:bg-slate-100">
+                      ${customer.totalSpent.toFixed(2)}
+                    </Badge>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
