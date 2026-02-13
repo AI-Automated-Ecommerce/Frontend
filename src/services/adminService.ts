@@ -68,3 +68,60 @@ export const uploadImage = async (file: File): Promise<{ imageUrl: string }> => 
   });
   return response.data;
 };
+
+// Customer Chats APIs
+export interface ChatConversation {
+  phoneNumber: string;
+  customerName: string;
+  customerEmail: string;
+  lastMessage: string;
+  lastMessageTime: string;
+  lastMessageRole: 'user' | 'assistant';
+  messageCount: number;
+  ongoingOrders: {
+    id: string;
+    status: string;
+    totalAmount: number;
+    createdAt: string;
+  }[];
+  hasUnread: boolean;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
+
+export interface ChatHistory {
+  phoneNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerAddress: string;
+  joinedDate: string;
+  messages: ChatMessage[];
+  orders: {
+    id: string;
+    status: string;
+    totalAmount: number;
+    createdAt: string;
+    itemCount?: number;
+    paymentMethod?: string;
+  }[];
+}
+
+export const getCustomerChats = async (): Promise<ChatConversation[]> => {
+  const response = await api.get('/admin/chats');
+  return response.data;
+};
+
+export const getCustomerChatHistory = async (phoneNumber: string): Promise<ChatHistory> => {
+  const response = await api.get(`/admin/chats/${phoneNumber}`);
+  return response.data;
+};
+
+export const sendAdminMessage = async (phoneNumber: string, data: { message: string }): Promise<{ status: string; message: string }> => {
+  const response = await api.post(`/admin/chats/${phoneNumber}/send`, data);
+  return response.data;
+};
