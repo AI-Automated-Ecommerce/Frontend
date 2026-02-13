@@ -1,4 +1,4 @@
-export type OrderStatus = 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled';
+export type OrderStatus = 'pending' | 'payment_review_requested' | 'paid' | 'shipped' | 'completed' | 'cancelled';
 
 export interface OrderItem {
   productId: number;
