@@ -59,8 +59,9 @@ const Orders = () => {
           if (selectedOrder?.id === orderId) {
             setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
           }
-      } catch (err: any) {
-          toast({ title: 'Error', description: err.message || 'Failed to update order status', variant: 'destructive' });
+      } catch (err: unknown) {
+          const errorMessage = err instanceof Error ? err.message : 'Failed to update order status';
+          toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
       }
   };
 

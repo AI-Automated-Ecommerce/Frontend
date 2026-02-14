@@ -131,8 +131,8 @@ const BusinessDetails = () => {
                 />
               </div>
               <DialogFooter>
-                <Button type="submit" disabled={false}>
-                  {false && (
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
                   {editingId ? 'Save Changes' : 'Create Section'}

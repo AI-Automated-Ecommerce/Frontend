@@ -1,6 +1,7 @@
 
+
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Order } from '@/types';
+import { Order, OrderStatus } from '@/types';
 import * as adminService from '@/services/adminService';
 import * as orderService from '@/services/orderService';
 
@@ -65,7 +66,7 @@ const orderSlice = createSlice({
                 const { orderId, status } = action.payload;
                 const order = state.items.find(o => o.id === orderId);
                 if (order) {
-                    order.status = status as any;
+                    order.status = status as OrderStatus;
                 }
             })
             // Place Order

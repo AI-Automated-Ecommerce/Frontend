@@ -66,6 +66,7 @@ const CustomerChats = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const dispatch = useAppDispatch();
 
   const { conversations = [], status } = useAppSelector((state) => state.chats);
@@ -94,6 +95,7 @@ const CustomerChats = () => {
   const handleSendMessage = async () => {
     if (!messageText.trim() || !selectedChat) return;
     
+    setIsSending(true);
     try {
       await dispatch(sendMessage({ phoneNumber: selectedChat, message: messageText.trim() })).unwrap();
       setMessageText('');
@@ -101,8 +103,11 @@ const CustomerChats = () => {
       // Refresh chat history and conversations
       dispatch(fetchChatHistory(selectedChat));
       dispatch(fetchCustomerChats());
-    } catch (error: any) {
-      toast.error(`Failed to send message: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
+      toast.error(`Failed to send message: ${errorMessage}`);
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -392,7 +397,7 @@ const CustomerChats = () => {
                   disabled={!messageText.trim()}
                   size="sm"
                 >
-                  {false ? (
+                  {isSending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>

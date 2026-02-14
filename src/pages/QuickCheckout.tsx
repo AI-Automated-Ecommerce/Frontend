@@ -156,9 +156,9 @@ const QuickCheckout = () => {
       navigate(`/order-confirmation/${response.order_id}`, {
         state: { orderDetails: response },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Order placement failed:", error);
-      const errorMessage = error.message || "Failed to place order";
+      const errorMessage = error instanceof Error ? error.message : "Failed to place order";
       toast.error(errorMessage);
     }
   };

@@ -76,25 +76,27 @@ const Products = () => {
     isActive: true,
   });
 
-  const handleCreateProduct = async (productData: any) => {
+  const handleCreateProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       await dispatch(createProduct(productData)).unwrap();
       toast({ title: 'Product added', description: 'Product has been created successfully' });
       setIsDialogOpen(false);
       resetForm();
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'Failed to create product', variant: 'destructive' });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create product';
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     }
   };
 
   const handleUpdateProduct = async (id: number, data: Partial<Product>) => {
     try {
-      await dispatch(updateProduct({ id, data })).unwrap();
+      await dispatch(updateProduct({ id, product: data })).unwrap();
       toast({ title: 'Product updated', description: 'Product has been updated successfully' });
       setIsDialogOpen(false);
       resetForm();
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'Failed to update product', variant: 'destructive' });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update product';
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     }
   };
 
@@ -104,8 +106,9 @@ const Products = () => {
       toast({ title: 'Product deleted', description: 'Product has been deleted successfully' });
       setIsDeleteDialogOpen(false);
       setProductToDelete(null);
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'Failed to delete product', variant: 'destructive' });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete product';
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     }
   };
 
